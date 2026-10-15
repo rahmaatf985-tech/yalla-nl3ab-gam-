@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#17152f">
+<title>يلا نلعب | تحدي معلوماتك</title>
+<style>
+:root{--bg:#111326;--card:#202440;--purple:#8b5cf6;--gold:#ffd166;--text:#fff;--muted:#b9bfd5;--green:#35d39a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding-bottom:88px}
+header{padding:22px 16px;background:linear-gradient(135deg,#7c3aed,#312e81);border-radius:0 0 25px 25px}
+header h1{margin:0 0 8px;font-size:29px}
+header p{margin:0;color:#eee}
+.stats{display:flex;gap:7px;margin-top:18px}
+.stat{flex:1;background:#ffffff20;border-radius:12px;padding:10px 4px;text-align:center;font-size:12px}
+.stat strong{display:block;font-size:20px;margin-top:5px}
+main{max-width:700px;margin:auto;padding:15px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);padding:16px;border-radius:17px;margin:12px 0;border:1px solid #343957}
+.hero{background:linear-gradient(135deg,#6d28d9,#4338ca);padding:22px;border-radius:20px}
+h2{font-size:21px;margin:8px 0 14px}h3{margin-top:5px}
+button{border:0;border-radius:12px;padding:12px 14px;font-weight:bold;font-size:15px;cursor:pointer}
+.primary{background:var(--gold);color:#211a35}
+.secondary{background:#38405f;color:white}
+.wide{width:100%;margin-top:9px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.level{background:var(--card);border:1px solid #414a70;color:white;min-height:55px;padding:8px}
+.level:disabled{opacity:.4}
+.muted{color:var(--muted);font-size:13px;line-height:1.7}
+.answer{display:block;width:100%;text-align:right;background:#343c5c;color:white;margin:9px 0}
+.answer:disabled{opacity:.65}
+.message{color:var(--gold);min-height:22px;line-height:1.6}
+input,textarea{width:100%;padding:12px;border:1px solid #4a5274;border-radius:10px;background:#111326;color:white;margin:7px 0;font:inherit}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1b2037;border-top:1px solid #353b58;z-index:5;padding:6px 1px calc(6px + env(safe-area-inset-bottom))}
+nav button{background:none;color:#c9cee2;flex:1;font-size:10px;padding:6px 1px}
+nav button span{display:block;font-size:19px;margin-bottom:4px}
+nav button.selected{color:var(--gold)}
+.vip{background:linear-gradient(140deg,#5132a0,#272044);border:1px solid #e8c96a}
+.tag{display:inline-block;background:#44346a;padding:5px 9px;border-radius:20px;color:#ffe08a;font-size:12px}
+hr{border:0;border-top:1px solid #414660;margin:17px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+<header>
+<h1>🎮 يلا نلعب</h1>
+<p>العب، فكّر، اجمع العملات، وتحدّى نفسك!</p>
+<div class="stats">
+<div class="stat">🪙 العملات<strong id="coins">100</strong></div>
+<div class="stat">❤️ المحاولات<strong id="lives">5</strong></div>
+<div class="stat">🏆 المستوى<strong id="levelStat">1</strong></div>
+</div>
+</header>
+
+<main>
+<section id="home" class="page active">
+<div class="hero">
+<span class="tag">أهلاً بك في يلا نلعب</span>
+<h2>هل أنت مستعد للتحدي؟ 🚀</h2>
+<p>جاوب صح، افتح مستويات جديدة، واجمع العملات!</p>
+<button class="primary wide" onclick="startLevel(state.level)">ابدأ اللعب</button>
+</div>
+<div class="card">
+<h2>📅 تحدي اليوم</h2>
+<p id="dailyStatus">سؤال يومي ومكافأة إضافية!</p>
+<button class="primary" onclick="dailyChallenge()">ابدأ تحدي اليوم</button>
+</div>
+<div class="card">
+<h2>📈 تقدمك</h2>
+<p id="progressText"></p>
+<button class="secondary wide" onclick="go('levels')">اختيار مستوى</button>
+</div>
+<div class="card vip">
+<h2>👑 يلا نلعب VIP</h2>
+<p>مميزات حصرية ومكافآت إضافية داخل اللعبة.</p>
+<button class="primary wide" onclick="go('premium')">اكتشف البريميوم</button>
+</div>
+</section>
+
+<section id="levels" class="page">
+<h2>🗺️ المستويات</h2>
+<p class="muted">افتح المستويات بالتدريج. بنك الأسئلة في النسخة الأولى محدود وقد تتكرر الأسئلة.</p>
+<div id="levelsGrid" class="grid"></div>
+<button class="secondary wide" onclick="moreLevels()">عرض 30 مستوى إضافيًا</button>
+</section>
+
+<section id="play" class="page">
+<div class="card">
+<p class="muted" id="levelLabel">المستوى 1</p>
+<h2 id="question">السؤال</h2>
+<div id="answers"></div>
+<p id="feedback" class="message"></p>
+<hr>
+<h3>🧰 المساعدات</h3>
+<button class="secondary wide" onclick="useAid('hint')">💡 تلميح — 20 عملة</button>
+<button class="secondary wide" onclick="useAid('remove')">✂️ حذف إجابتين — 30 عملة</button>
+<button class="secondary wide" onclick="useAid('reveal')">👀 كشف الإجابة — 50 عملة</button>
+<button class="secondary wide" onclick="go('levels')">العودة للمستويات</button>
+</div>
+</section>
+
+<section id="shop" class="page">
+<h2>🛒 متجر المساعدات</h2>
+<p class="muted">استخدمي العملات التي تجمعينها في اللعب.</p>
+<div class="card"><h3>💡 تلميح</h3><p>تلميح يساعدك في السؤال الحالي — 20 عملة.</p><button class="primary" onclick="shopAid('hint')">شراء التلميح</button></div>
+<div class="card"><h3>✂️ حذف إجابتين</h3><p>إخفاء إجابتين خاطئتين — 30 عملة.</p><button class="primary" onclick="shopAid('remove')">شراء الحذف</button></div>
+<div class="card"><h3>👀 كشف الإجابة</h3><p>معرفة الإجابة الصحيحة — 50 عملة.</p><button class="primary" onclick="shopAid('reveal')">شراء الكشف</button></div>
+<div class="card"><h3>❤️ استعادة المحاولات</h3><p>استعادة 5 محاولات — 40 عملة.</p><button class="primary" onclick="buyLives()">استعادة المحاولات</button></div>
+</section>
+
+<section id="premium" class="page">
+<div class="card vip">
+<span class="tag">VIP 👑</span>
+<h2>ارتقِ بتجربتك!</h2>
+<p>استمتع بمميزات تجريبية إضافية داخل يلا نلعب.</p>
+<hr>
+<p>✨ شارة VIP في ملفك الشخصي.</p>
+<p>🎁 مكافأة تجريبية قدرها 100 عملة.</p>
+<p>💡 تلميح مجاني كل يوم لعب.</p>
+<p>🎨 مظهر مميز لصفحة VIP.</p>
+<p class="muted">هذه العضوية تجريبية ولا تخصم أموالًا ولا تنشئ اشتراكًا مدفوعًا.</p>
+<button id="vipButton" class="primary wide" onclick="activateVip()">تفعيل VIP التجريبي مجانًا</button>
+<p id="vipStatus" class="message"></p>
+</div>
+</section>
+
+<section id="profile" class="page">
+<h2>👤 ملفي الشخصي</h2>
+<div class="card">
+<p>اسم اللاعب</p>
+<input id="playerName" maxlength="20" placeholder="اكتب اسمك">
+<button class="primary wide" onclick="saveName()">حفظ الاسم</button>
+<p id="nameFeedback" class="message"></p>
+<hr>
+<p>الحالة: <strong id="vipProfile">عضو عادي</strong></p>
+<p>المستوى: <strong id="profileLevel">1</strong></p>
+<p>العملات: <strong id="profileCoins">100</strong></p>
+<p>المستويات المكتملة: <strong id="profileDone">0</strong></p>
+<p class="muted">بيانات الملف محفوظة محليًا في هذا المتصفح، وليست حسابًا على الإنترنت.</p>
+<button class="secondary wide" onclick="resetGame()">إعادة بدء اللعبة</button>
+</div>
+</section>
+
+<section id="leaderboard" class="page">
+<h2>🏆 لوحة المتصدرين</h2>
+<div class="card">
+<h3>إنجازك على هذا الجهاز</h3>
+<div id="leaderText"></div>
+<p class="muted">هذه لوحة محلية للتجربة، وليست ترتيبًا عالميًا بين اللاعبين.</p>
+</div>
+</section>
+
+<section id="chat" class="page">
+<h2>💬 الدردشة</h2>
+<div class="card">
+<p>مرحبًا بك في مجتمع يلا نلعب!</p>
+<p class="muted">الدردشة هنا تجريبية على جهازك فقط. الرسائل لا تصل للاعبين الآخرين.</p>
+<input id="chatInput" maxlength="160" placeholder="اكتب رسالة تجريبية">
+<button class="primary wide" onclick="sendMessage()">إضافة الرسالة</button>
+<div id="chatMessages"></div>
+</div>
+</section>
+
+<footer>يلا نلعب 🎮 — نموذج أولي مجاني</footer>
+</main>
+
+<nav>
+<button class="selected" onclick="go('home',this)"><span>🏠</span>الرئيسية</button>
+<button onclick="go('levels',this)"><span>🗺️</span>المستويات</button>
+<button onclick="go('shop',this)"><span>🛒</span>المتجر</button>
+<button onclick="go('premium',this)"><span>👑</span>VIP</button>
+<button onclick="go('leaderboard',this)"><span>🏆</span>الترتيب</button>
+<button onclick="go('profile',this)"><span>👤</span>حسابي</button>
+<button onclick="go('chat',this)"><span>💬</span>الشات</button>
+</nav>
+
+<script>
+const questions=[
+{q:"ما عاصمة مصر؟",a:["القاهرة","الإسكندرية","الأقصر","أسوان"],c:0,h:"مدينة مصر الأكبر ومركز الحكم."},
+{q:"كم عدد أيام الأسبوع؟",a:["خمسة","ستة","سبعة","ثمانية"],c:2,h:"يبدأ من السبت أو الأحد حسب التقويم."},
+{q:"ما الكوكب المعروف بالكوكب الأحمر؟",a:["الزهرة","المريخ","زحل","عطارد"],c:1,h:"لونه يبدو مائلًا إلى الأحمر."},
+{q:"كم يساوي 5 + 7؟",a:["10","11","12","13"],c:2,h:"أضيفي خمسة إلى سبعة."},
+{q:"ما أكبر محيط على الأرض؟",a:["الهندي","الأطلسي","المتجمد الشمالي","الهادئ"],c:3,h:"يقع بين آسيا وأستراليا والأمريكتين."},
+{q:"أي حيوان يُعرف بسفينة الصحراء؟",a:["الحصان","الجمل","الفيل","الغزال"],c:1,h:"يساعد الناس على السفر في الصحراء."},
+{q:"ما اللغة الرسمية في البرازيل؟",a:["الإسبانية","الإنجليزية","البرتغالية","الفرنسية"],c:2,h:"لغة أوروبية يتحدث بها سكان البرتغال."},
+{q:"كم ضلعًا للمثلث؟",a:["اثنان","ثلاثة","أربعة","خمسة"],c:1,h:"اسمه يساعدك على معرفة العدد."},
+{q:"ما الغاز الذي تحتاجه معظم الكائنات للتنفس؟",a:["الأكسجين","الهيليوم","النيون","الهيدروجين"],c:0,h:"رمزه الكيميائي O₂."},
+{q:"في أي اتجاه تشرق الشمس؟",a:["الغرب","الشمال","الشرق","الجنوب"],c:2,h:"الاتجاه المقابل للغرب."},
+{q:"ما أكبر كوكب في المجموعة الشمسية؟",a:["الأرض","المشتري","المريخ","الزهرة"],c:1,h:"كوكب عملاق غازي."},
+{q:"كم دقيقة في الساعة؟",a:["30","45","60","100"],c:2,h:"ستة عشرات من الدقائق."},
+{q:"ما العضو الذي يضخ الدم في الجسم؟",a:["الرئة","القلب","المعدة","الكبد"],c:1,h:"ينبض باستمرار."},
+{q:"أي فصل يأتي بعد الشتاء؟",a:["الصيف","الخريف","الربيع","الشتاء"],c:2,h:"فصل تتفتح فيه الأزهار."},
+{q:"ما ناتج 9 × 3؟",a:["18","21","27","30"],c:2,h:"ثلاث مجموعات من تسعة."}
+];
+const initial={coins:100,lives:5,level:1,unlocked:1,completed:[],name:"لاعب جديد",vip:false,dailyDate:"",dailyDone:false};
+let state;
+try{state={...initial,...JSON.parse(localStorage.getItem("yalla-v1")||"{}")}}catch(e){state={...initial}}
+let currentLevel=1,currentIndex=0,visibleLevels=30,answered=false;
+function save(){try{localStorage.setItem("yalla-v1",JSON.stringify(state))}catch(e){}renderStats()}
+function renderStats(){
+["coins","lives","levelStat"].forEach((id,i)=>document.getElementById(id).textContent=[state.coins,state.lives,state.level][i]);
+document.getElementById("profileLevel").textContent=state.level;
+document.getElementById("profileCoins").textContent=state.coins;
+document.getElementById("profileDone").textContent=state.completed.length;
+document.getElementById("playerName").value=state.name;
+document.getElementById("progressText").textContent=`أكملت ${state.completed.length} مستوى، ووصلت إلى المستوى ${state.level}.`;
+document.getElementById("dailyStatus").textContent=state.dailyDone&&state.dailyDate===today()?"أكملتِ تحدي اليوم!":"أجيبي عن سؤال اليوم لتحصلي على 15 عملة.";
+document.getElementById("vipProfile").textContent=state.vip?"عضو VIP 👑":"عضو عادي";
+document.getElementById("vipButton").textContent=state.vip?"تم تفعيل VIP التجريبي":"تفعيل VIP التجريبي مجانًا";
+document.getElementById("vipStatus").textContent=state.vip?"عضويتك التجريبية مفعلة على هذا الجهاز.":"";
+document.getElementById("leaderText").textContent=`${state.name} — المستوى ${state.level} — ${state.completed.length} مستوى مكتمل`;
+}
+function today(){return new Date().toLocaleDateString("en-CA")}
+function go(id,btn){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("selected"));
+if(btn)btn.classList.add("selected");
+if(id==="levels")renderLevels();
+}
+function renderLevels(){
+const grid=document.getElementById("levelsGrid");grid.innerHTML="";
+for(let i=1;i<=visibleLevels;i++){
+const b=document.createElement("button");b.className="level";
+b.textContent=state.completed.includes(i)?"✅ "+i:(i<=state.unlocked?"🔓 "+i:"🔒 "+i);
+b.disabled=i>state.unlocked;b.onclick=()=>startLevel(i);grid.appendChild(b);
+}}
+function moreLevels(){if(visibleLevels>=1000){alert("تم عرض 1000 مستوى. بنك الأسئلة الحالي محدود وتتكرر الأسئلة.");return}visibleLevels=Math.min(1000,visibleLevels+30);renderLevels()}
+function startLevel(level){
+if(state.lives<=0){alert("انتهت المحاولات. يمكنك استعادتها من المتجر.");go("shop");return}
+currentLevel=level;currentIndex=(level-1)%questions.length;answered=false;
+const q=questions[currentIndex];
+document.getElementById("levelLabel").textContent="المستوى "+level;
+document.getElementById("question").textContent=q.q;
+document.getElementById("feedback").textContent="";
+const box=document.getElementById("answers");box.innerHTML="";
+q.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=a;b.onclick=()=>checkAnswer(i);box.appendChild(b)});
+go("play");
+}
+function checkAnswer(i){
+if(answered)return;answered=true;
+const q=questions[currentIndex],buttons=[...document.querySelectorAll("#answers .answer")];
+buttons.forEach(b=>b.disabled=true);
+if(i===q.c){
+document.getElementById("feedback").textContent="إجابة صحيحة! 🎉 ربحت 10 عملات.";
+state.coins+=10;
+if(!state.completed.includes(currentLevel))state.completed.push(currentLevel);
+state.unlocked=Math.max(state.unlocked,currentLevel+1);
+state.level=Math.max(state.level,currentLevel+1);
+}else{
+state.lives=Math.max(0,state.lives-1);
+document.getElementById("feedback").textContent="إجابة غير صحيحة. المحاولات المتبقية: "+state.lives;
+}
+save();renderLevels();
+const next=document.createElement("button");next.className="primary wide";next.textContent="المستوى التالي";next.onclick=()=>startLevel(state.unlocked);document.getElementById("answers").appendChild(next);
+}
+function useAid(type){if(!document.getElementById("play").classList.contains("active")){alert("ابدئي سؤالًا أولًا.");return}applyAid(type)}
+function shopAid(type){if(!document.getElementById("play").classList.contains("active")){alert("افتحي سؤالًا أولًا من صفحة المستويات، ثم استخدمي المساعدة.");go("levels");return}applyAid(type)}
+function applyAid(type){
+if(answered){alert("هذا السؤال انتهى. افتحي سؤالًا جديدًا.");return}
+const q=questions[currentIndex],cost={hint:20,remove:30,reveal:50}[type];
+if(state.coins<cost){alert("عملاتك غير كافية.");return}
+state.coins-=cost;save();
+const buttons=[...document.querySelectorAll("#answers .answer")];
+if(type==="hint")document.getElementById("feedback").textContent="💡 "+q.h;
+if(type==="remove"){
+buttons.forEach((b,i)=>{if(i!==q.c&&i!==((q.c+1)%4))b.style.visibility="hidden"});
+document.getElementById("feedback").textContent="تم إخفاء إجابتين.";
+}
+if(type==="reveal"){
+document.getElementById("feedback").textContent="الإجابة الصحيحة: "+q.a[q.c];
+buttons.forEach(b=>b.disabled=true);answered=true;
+}
+}
+function buyLives(){if(state.coins<40){alert("تحتاج إلى 40 عملة.");return}state.coins-=40;state.lives=5;save();alert("تمت استعادة 5 محاولات!")}
+function dailyChallenge(){
+const t=today();
+if(state.dailyDate===t&&state.dailyDone){alert("أنهيت تحدي اليوم بالفعل.");return}
+const q=questions[new Date().getDate()%questions.length];
+const response=prompt(q.q+"\n"+q.a.map((a,i)=>(i+1)+". "+a).join("\n")+"\nاكتبي رقم الإجابة:");
+if(response===null)return;
+if(Number(response)-1===q.c){state.dailyDate=t;state.dailyDone=true;state.coins+=15;save();alert("إجابة صحيحة! ربحت 15 عملة.");}
+else alert("إجابة غير صحيحة. حاولي مرة أخرى غدًا.");
+}
+function activateVip(){
+if(state.vip){alert("VIP التجريبي مفعّل بالفعل.");return}
+state.vip=true;state.coins+=100;save();alert("تم تفعيل VIP التجريبي وإضافة 100 عملة!");
+}
+function saveName(){const v=document.getElementById("playerName").value.trim();if(!v)return;state.name=v;save();document.getElementById("nameFeedback").textContent="تم حفظ الاسم على هذا الجهاز."}
+function sendMessage(){
+const input=document.getElementById("chatInput"),v=input.value.trim();if(!v)return;
+const p=document.createElement("p");p.textContent=state.name+": "+v;document.getElementById("chatMessages").prepend(p);input.value="";
+}
+function resetGame(){if(!confirm("هل تريد بدء اللعبة من جديد؟ سيتم مسح تقدمك المحلي."))return;localStorage.removeItem("yalla-v1");state={...initial,completed:[]};save();renderLevels();alert("بدأت لعبة جديدة!")}
+renderStats();renderLevels();
+</script>
+</body>
+</html>
